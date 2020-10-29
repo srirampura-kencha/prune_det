@@ -4,3 +4,5 @@ MODEL:
   MASK_ON: True
   RESNETS:
     DEPTH: 50
+  # FPN:
+  #   OUT_CHANNELS: 128

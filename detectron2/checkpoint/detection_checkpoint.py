@@ -7,6 +7,17 @@ import detectron2.utils.comm as comm
 
 from .c2_model_loading import align_and_update_state_dicts
 
+def convert_res18_keys(layer_name):
+    for i in range(1,5):
+        layer_name = layer_name.replace('layer{}'.format(i), 'res{}'.format(i+1))
+    for i in range(1, 3):
+        layer_name = layer_name.replace('bn{}'.format(i), 'conv{}.norm'.format(i))
+    for i in range(2):
+        layer_name = layer_name.replace('downsample.{}'.format(i), 'shortcut{}'.format('.norm' if i else ''))
+    if layer_name.startswith('conv1'):
+        layer_name = 'stem.' + layer_name
+    layer_name = 'backbone.bottom_up.' + layer_name
+    return layer_name
 
 class DetectionCheckpointer(Checkpointer):
     """
@@ -40,6 +51,11 @@ class DetectionCheckpointer(Checkpointer):
                 return {"model": data, "__author__": "Caffe2", "matching_heuristics": True}
 
         loaded = super()._load_file(filename)  # load native pth checkpoint
+        # import pdb; pdb.set_trace; from IPython import embed; embed()  
+        if 'resnet18' in filename:
+            keys_dict = {k:convert_res18_keys(k) for k in  loaded.keys()}  
+            loaded = {keys_dict[k]:v for k,v in loaded.items()}      
+
         if "model" not in loaded:
             loaded = {"model": loaded}
         return loaded
@@ -71,3 +87,4 @@ class DetectionCheckpointer(Checkpointer):
                 except ValueError:
                     pass
         return incompatible
+

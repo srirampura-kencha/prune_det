@@ -136,6 +136,9 @@ def main(args):
         DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
             cfg.MODEL.WEIGHTS, resume=args.resume
         )
+
+        lth_pruner = lth(fasterRCNN, args.keep_percentage, args.num_rounds, args.late_reset_iter, args.module_list)
+        
         res = Trainer.test(cfg, model)
         if cfg.TEST.AUG.ENABLED:
             res.update(Trainer.test_with_TTA(cfg, model))
@@ -150,6 +153,8 @@ def main(args):
     """
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=args.resume)
+    torch.save({'model': trainer.model.state_dict()}, cfg['OUTPUT_DIR'] + '/model_0000000.pth')    
+
     if cfg.TEST.AUG.ENABLED:
         trainer.register_hooks(
             [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]

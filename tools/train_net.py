@@ -150,6 +150,10 @@ def main(args):
     """
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=args.resume)
+    torch.save({'model': trainer.model.state_dict()}, cfg['OUTPUT_DIR'] + '/epoch0.pth')    
+    # import pdb; pdb.set_trace; from IPython import embed; embed()
+
+
     if cfg.TEST.AUG.ENABLED:
         trainer.register_hooks(
             [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]

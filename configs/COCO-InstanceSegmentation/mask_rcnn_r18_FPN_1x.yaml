@@ -5,9 +5,9 @@ MODEL:
   RESNETS:
     DEPTH: 18
     RES2_OUT_CHANNELS: 64
-# DATASETS:
-#   TRAIN: ("coco_2017_val",)
-#   TEST: ("coco_2017_val",) #("coco_2017_test-dev",)
+DATASETS:
+  TRAIN: ("coco_2017_val",)
+  TEST: ("coco_2017_val",) #("coco_2017_test-dev",)
 SOLVER:
   BASE_LR: 0.02
   CHECKPOINT_PERIOD: 7330

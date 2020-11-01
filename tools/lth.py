@@ -51,11 +51,11 @@ class lth:
 		self.mask = {}
 		self.n_mask_dims = 0
 		for name, param in model.named_parameters():
-			# if 'weight' in name and ('conv' in name or 'Conv' in name):
-			# if 'weight' in name and 'bn' not in name:
-			#if self.check_modules(name):
-			self.mask[name] = torch.ones_like(param)
-			self.n_mask_dims += param.numel()
+			if 'weight' in name and 'conv' in name:
+				# if 'weight' in name and 'bn' not in name:
+				#if self.check_modules(name):
+				self.mask[name] = torch.ones_like(param)
+				self.n_mask_dims += param.numel()
 
 
 	def generate_layer_wise_mask(self,model,pruning_round):

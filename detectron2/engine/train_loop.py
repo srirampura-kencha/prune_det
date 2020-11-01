@@ -242,6 +242,11 @@ class SimpleTrainer(TrainerBase):
         suboptimal as explained in https://arxiv.org/abs/2006.15704 Sec 3.2.4
         """
         self.optimizer.step()
+        if self.lth_pruner is not None:
+            for name, param in self.model.state_dict():
+                if name in self.lth_pruner.mask:
+                    param *= self.lth_pruner.mask[name]
+            print(lth_pruner.count_zeros(self.model))
 
     def _write_metrics(self, loss_dict: Dict[str, torch.Tensor], data_time: float):
         """

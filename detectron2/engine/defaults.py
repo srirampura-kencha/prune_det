@@ -268,7 +268,7 @@ class DefaultTrainer(SimpleTrainer):
         cfg (CfgNode):
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, lth_pruner = None):
         """
         Args:
             cfg (CfgNode):
@@ -302,6 +302,7 @@ class DefaultTrainer(SimpleTrainer):
         self.start_iter = 0
         self.max_iter = cfg.SOLVER.MAX_ITER
         self.cfg = cfg
+        self.lth_pruner = lth_pruner
 
         self.register_hooks(self.build_hooks())
 

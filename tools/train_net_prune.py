@@ -158,7 +158,7 @@ def main(args):
     torch.save({'model': trainer.model.state_dict()}, cfg['OUTPUT_DIR'] + '/model_0000000.pth')    
 
     lth_pruner = lth.lth(trainer.model,keep_percentage=0.1,n_rounds=2,late_reset_iter=0,module_list=None)
-    print("LTH PRUner initialized")
+    print("LTH Pruner initialized")
 
     lth_pruner.init_state_dict = trainer.model.state_dict()
     #lth_pruner.init_opt_state_dict = optimizer.state_dict()
@@ -168,20 +168,12 @@ def main(args):
 
     #trainer.model = lth_pruner.model
 
-    lth_pruner.count_zeros(trainer.model)
-    n_params = 0
-    n_zeros = 0
-    for name, param in trainer.model.named_parameters():
-        print(name, param.size())
-        n_params += param.numel()
-        n_zeros += torch.sum(param==0).numel()
-    print(n_zeros/n_params)
+    lth_pruner.count_zeros(lth_pruner.model)
 
     if cfg.TEST.AUG.ENABLED:
         trainer.register_hooks(
             [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
         )
-    trainer.lth_pruner = lth_pruner
     return trainer.train()
 
 

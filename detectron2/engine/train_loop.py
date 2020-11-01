@@ -242,6 +242,7 @@ class SimpleTrainer(TrainerBase):
         suboptimal as explained in https://arxiv.org/abs/2006.15704 Sec 3.2.4
         """
         self.optimizer.step()
+        print('LTH pruner: ',self.lth_pruner)
         if self.lth_pruner is not None:
             for name, param in self.model.state_dict():
                 if name in self.lth_pruner.mask:

@@ -172,10 +172,10 @@ def main(args):
     n_params = 0
     n_zeros = 0
     for name, param in trainer.model.named_parameters():
-        print(name, param.size())
+        # print(name, param.size())
         n_params += param.numel()
-        n_zeros += torch.sum(param==0).numel()
-    print(n_zeros/n_params)
+        n_zeros += torch.sum(param==0).item()
+    print('Zero percentage: {}'.format(n_zeros/n_params))
 
     if cfg.TEST.AUG.ENABLED:
         trainer.register_hooks(

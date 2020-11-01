@@ -147,11 +147,12 @@ class lth:
 		z = 0
 		total_weights = 0
 		for k in state_dict.keys():
+			if 'weight' in k and 'conv' in k:
 				w = state_dict[k]
 				total_weights += w.nelement()
 				z = z + len(w[w==0])
 				
-				print("Layer: ",k,"  ",len(w[w==0])/w.nelement())
+				# print("Layer: ",k,"  ",len(w[w==0])/w.nelement())
 
 		print('\n\n')
 		print('Total weights: ')

@@ -5,7 +5,7 @@ import pdb #debugger
 
 
 class lth:
-	def __init__(self, model, keep_percentage, n_rounds, late_reset_iter, module_list=None):
+	def __init__(self, model, keep_percentage, n_rounds, late_reset_iter=None, module_list=None):
 		self.model = model
 		self.keep_percentage = keep_percentage
 		self.n_rounds = n_rounds
@@ -17,6 +17,10 @@ class lth:
 		#print(self.get_lth_stats())
 		self.init_state_dict = None
 		self.init_opt_state_dict = None
+		
+		#For debug purposes.
+		self.model_path = ''
+
 
 	def check_modules(self, name):
 		# (base_conv|top_conv|rpn_conv|top_fc|rpn_fc|downsample|bn)
@@ -51,9 +55,11 @@ class lth:
 		self.mask = {}
 		self.n_mask_dims = 0
 		for name, param in model.named_parameters():
-			if 'weight' in name and 'conv' in name:
-				# if 'weight' in name and 'bn' not in name:
+			if 'weight' in name and (('conv' in name) or ('fpn' in name) \
+				or ('fcn' in name) or ('fc1' in name) or ('fc2') in name ):
+
 				#if self.check_modules(name):
+				print('Pruning: ',name)
 				self.mask[name] = torch.ones_like(param)
 				self.n_mask_dims += param.numel()
 
@@ -137,27 +143,38 @@ class lth:
 		return print_str
 
 
-	def count_zeros(self,model):
+	def count_zeros(self,model,layer_wise=True):
 		"""
 			The goal is number of zeros should match in each layer!.
 		"""
 		
-		state_dict = model.state_dict()
+		# state_dict = model.state_dict()
 
-		z = 0
-		total_weights = 0
-		for k in state_dict.keys():
-			if 'weight' in k and 'conv' in k:
-				w = state_dict[k]
-				total_weights += w.nelement()
-				z = z + len(w[w==0])
-				
-				# print("Layer: ",k,"  ",len(w[w==0])/w.nelement())
+		# z = 0
+		# total_weights = 0
+		# for k in state_dict.keys():
+		# 	#print("Layer: ",k,"  ")
+		# 	#if 'weight' in k and 'conv' in k:
+		# 	w = state_dict[k]
+		# 	total_weights += w.nelement()
+		# 	z = z + len(w[w==0])
+		# 	if layer_wise:
+		# 		print("Layer: ",k,"  ",len(w[w==0])/w.nelement(),w.nelement())
 
-		print('\n\n')
-		print('Total weights: ')
-		print(z,'/',total_weights,' = ',z/total_weights)
-		return z,total_weights
+		# #print('\n\n')
+		# #print('Total weights: ')
+		# #print(z,'/',total_weights,' = ',z/total_weights)
+		# num_zero_percentage = z/total_weights
+		# return num_zero_percentage,total_weights
+
+		n_params = 0
+		n_zeros = 0
+
+		for name, param in model.named_parameters():
+			#print(name)
+			n_params += param.numel()
+			n_zeros += torch.sum(param==0).item()
+		print('Zero percentage: {}'.format(n_zeros/n_params))
 
 
 

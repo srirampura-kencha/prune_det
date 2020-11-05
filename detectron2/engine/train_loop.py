@@ -167,6 +167,20 @@ class TrainerBase:
         raise NotImplementedError
 
 
+def count_zeros(model,layer_wise=True,suffix=''):
+    
+    n_params = 0
+    n_zeros = 0
+
+    for name, param in model.named_parameters():
+        #print(name)
+        n_params += param.numel()
+        n_zeros += torch.sum(param==0).item()
+
+    print('{} Zero percentage: {}'.format(suffix, n_zeros/n_params))
+
+
+
 class SimpleTrainer(TrainerBase):
     """
     A simple trainer for the most common type of task:
@@ -203,7 +217,7 @@ class SimpleTrainer(TrainerBase):
         like evaluation during training, you can overwrite its train() method.
         """
         model.train()
-
+        #count_zeros(model.module.backbone.bottom_up)
         self.model = model
         self.data_loader = data_loader
         self._data_loader_iter = iter(data_loader)
@@ -241,13 +255,36 @@ class SimpleTrainer(TrainerBase):
         wrap the optimizer with your custom `step()` method. But it is
         suboptimal as explained in https://arxiv.org/abs/2006.15704 Sec 3.2.4
         """
-        self.optimizer.step()
-        print('LTH pruner: ',self.lth_pruner)
+        
+
+        state = self.model.module.state_dict()
+
+        #print(state['backbone.bottom_up.res4.0.conv1.weight'].sum())
+        #print('count')
+        # count_zeros(self.model.module.backbone.bottom_up,suffix='pre_opt')
+
+
+        # for k, (name,param) in enumerate(self.model.module.named_parameters()):
+        #     #if 'weight' in name:
+        #     if name in self.lth_pruner.mask and param.grad is not None:
+        #         weight_copy = param.data.abs().clone()
+        #         mask = weight_copy.gt(0).float().cuda()
+        #         param.grad.data.mul_(mask)
+
+
+        self.optimizer.step() 
+
         if self.lth_pruner is not None:
-            for name, param in self.model.state_dict():
+            n_zeros = 0
+            n_params = 0
+            for name, param in self.model.module.state_dict().items():
+
                 if name in self.lth_pruner.mask:
                     param *= self.lth_pruner.mask[name]
-            print(lth_pruner.count_zeros(self.model))
+                    n_zeros += torch.sum(self.lth_pruner.mask[name]==0).item()
+                    n_params += self.lth_pruner.mask[name].numel()
+           
+            count_zeros(self.model.module.backbone.bottom_up,suffix='Post_masking')
 
     def _write_metrics(self, loss_dict: Dict[str, torch.Tensor], data_time: float):
         """

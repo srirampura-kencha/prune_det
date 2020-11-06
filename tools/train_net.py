@@ -391,17 +391,12 @@ def main(args):
         #We have to ensure the same stuff is frozen before and after transfer
 
         after_grad = {}
-        #print('\n after ticket transfer\n')
+        
+        #setting default grad.
         for name, param in trainer.model.named_parameters():
             param.requires_grad = before_grad[name]
             after_grad[name] = param.requires_grad
 
-
-        # #Check grad
-        # print('\n\n')
-        # for name in before_grad.keys():
-        #     print(name,' before: ',before_grad[name],' After: ',after_grad[name])
-        # print('\n\n')
 
         count_zeros(trainer.model.module.backbone.bottom_up)
 

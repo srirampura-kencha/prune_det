@@ -370,21 +370,39 @@ def main(args):
 
     trainer = Trainer(cfg)
 
-    #This loads the final weights.
+    #This resumes weights.
     trainer.resume_or_load(resume=args.resume)
+
 
     #Class only used to store weights and mask.
     if cfg['IMAGENET_TICKET'] is not None:
 
-        #This modifes trainer model module
+        before_grad = {}
+        for name, param in trainer.model.named_parameters():
+            before_grad[name] = param.requires_grad
+
+        #This modifes trainer model module.
         new_mask = transfer_ticket(trainer.model.module,cfg['IMAGENET_TICKET'],\
            cfg['IMAGENET_TICKET_TYPE'])
 
         # new_mask = transfer_ticket(trainer.model,cfg['IMAGENET_TICKET'],\
         #    cfg['IMAGENET_TICKET_TYPE'])
 
+        #We have to ensure the same stuff is frozen before and after transfer
 
-        trainer.model.train()
+        after_grad = {}
+        #print('\n after ticket transfer\n')
+        for name, param in trainer.model.named_parameters():
+            param.requires_grad = before_grad[name]
+            after_grad[name] = param.requires_grad
+
+
+        # #Check grad
+        # print('\n\n')
+        # for name in before_grad.keys():
+        #     print(name,' before: ',before_grad[name],' After: ',after_grad[name])
+        # print('\n\n')
+
         count_zeros(trainer.model.module.backbone.bottom_up)
 
         for name,param in trainer.model.state_dict().items():

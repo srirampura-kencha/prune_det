@@ -256,7 +256,6 @@ class SimpleTrainer(TrainerBase):
         suboptimal as explained in https://arxiv.org/abs/2006.15704 Sec 3.2.4
         """
         
-
         state = self.model.module.state_dict()
 
         #print(state['backbone.bottom_up.res4.0.conv1.weight'].sum())
@@ -284,7 +283,7 @@ class SimpleTrainer(TrainerBase):
                     n_zeros += torch.sum(self.lth_pruner.mask[name]==0).item()
                     n_params += self.lth_pruner.mask[name].numel()
            
-            count_zeros(self.model.module.backbone.bottom_up,suffix='Post_masking')
+            #count_zeros(self.model.module.backbone.bottom_up,suffix='Post_masking')
 
     def _write_metrics(self, loss_dict: Dict[str, torch.Tensor], data_time: float):
         """

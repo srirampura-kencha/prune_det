@@ -321,6 +321,7 @@ class DefaultTrainer(SimpleTrainer):
             resume (bool): whether to do resume or not
         """
         checkpoint = self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume)
+        print("Loaded from ",self.cfg.MODEL.WEIGHTS,'\n')
         if resume and self.checkpointer.has_checkpoint():
             self.start_iter = checkpoint.get("iteration", -1) + 1
             # The checkpoint stores the training iteration that just finished, thus we start

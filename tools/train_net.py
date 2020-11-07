@@ -192,6 +192,102 @@ def generate_new_mask_prune(model,mask,n_mask_dims,keep_percentage):
     
     return mask
 
+  
+def get_binary_mask(model,mask):
+
+    state_dict = model.state_dict()
+    new_mask = {}
+    for name in mask:
+        if name in state_dict and  ('backbone' in name) and ('bottom_up' in name): 
+
+            model_param = state_dict[name].clone()
+            model_param[model_param!=0] = 1
+            new_mask[name] = model_param.byte().float()
+
+    return new_mask
+
+def copy_bn(ticket_bn,model_bn):
+    tick_state_dict = ticket_bn.state_dict()
+    mod_state_dict = model_bn.state_dict()
+
+    for key in mod_state_dict.keys():
+        mod_state_dict[key] = tick_state_dict[key]
+
+    return mod_state_dict    
+
+
+def compare_bnorm(back_bnorm,tick_bnorm):
+  
+    back_norm_state_dict = back_bnorm.state_dict()
+    tick_norm_state_dict = tick_bnorm.state_dict()
+
+    for k in back_norm_state_dict.keys():
+        if torch.all(tick_norm_state_dict[k] != back_norm_state_dict[k]):
+            return False
+    return True
+
+def compare_block(back_block,ticket_block,imagenet_ticket_type,shortcut=True):
+
+
+    #SET 1
+    #Conv1 and bnorm
+    assert torch.all(back_block[0].conv1.weight ==  ticket_block[0].conv1.weight)
+    assert compare_bnorm(back_block[0].conv1.norm,ticket_block[0].bn1)
+
+    #Conv2 and bnorm
+    assert torch.all(back_block[0].conv2.weight == ticket_block[0].conv2.weight)
+    assert compare_bnorm(back_block[0].conv2.norm,ticket_block[0].bn2)
+
+    if shortcut:
+        #Shortcut/downsample
+        assert torch.all(back_block[0].shortcut.weight == ticket_block[0].downsample[0].weight)
+        assert compare_bnorm(back_block[0].shortcut.norm,ticket_block[0].downsample[1])
+
+
+    #SET 2
+    #Conv1 and bnorm
+    assert torch.all(back_block[1].conv1.weight ==  ticket_block[1].conv1.weight)
+    assert compare_bnorm(back_block[1].conv1.norm,ticket_block[1].bn1)
+
+    #Conv2 and bnorm
+    assert torch.all(back_block[1].conv2.weight == ticket_block[1].conv2.weight)
+    assert compare_bnorm(back_block[1].conv2.norm,ticket_block[1].bn2)
+
+    print("TRUE")
+
+    if imagenet_ticket_type == 'res50':
+        pass
+
+
+
+def check_transfer(back,ticket_model,imagenet_ticket_type):
+
+    mod_state_dict = back.state_dict()
+    tick_state_dict = ticket_model.state_dict()
+
+    mod_names = list(mod_state_dict.keys())
+
+    tick_names = list(tick_state_dict.keys())
+    tick_names = [x for x in tick_names if 'num_batches' not in x]
+    tick_names = [x for x in tick_names if 'fc' not in x]
+
+    #breakpoint()
+
+    for i in range(len(tick_names)):
+        mod_param = mod_state_dict[ mod_names[i]  ]
+        tick_param = tick_state_dict[ tick_names[i] ]
+
+        if 'res3' in mod_names[i]:
+            break
+        print(mod_names[i],tick_names[i],mod_param.shape,tick_param.shape)
+        print(torch.all(mod_param==tick_param).item())
+
+    compare_block(back.res2,ticket_model.layer1,imagenet_ticket_type,shortcut=False)
+    compare_block(back.res3,ticket_model.layer2,imagenet_ticket_type)
+    compare_block(back.res4,ticket_model.layer3,imagenet_ticket_type)
+    compare_block(back.res5,ticket_model.layer4,imagenet_ticket_type)
+
+
 def replace_block(backbone_block,ticket_block,imagenet_ticket_type,shortcut=False):
 
     """ 
@@ -213,16 +309,15 @@ def replace_block(backbone_block,ticket_block,imagenet_ticket_type,shortcut=Fals
 
             if shortcut and i==0:
                 #Downsample = shortcut.
-                #breakpoint()
 
                 back_state_dict = back.shortcut.state_dict()
                 tick_state_dict = tick.downsample[0].state_dict()
 
                 #Copy cnn
                 back_state_dict['weight'] = tick_state_dict['weight']
+                back.shortcut.load_state_dict(back_state_dict)
 
                 #copy bnorm
-
                 back_bn_state_dict = back.shortcut.norm.state_dict()
                 tick_bn_state_dict = tick.downsample[1].state_dict()
 
@@ -270,91 +365,11 @@ def replace_block(backbone_block,ticket_block,imagenet_ticket_type,shortcut=Fals
                 back_bn_state_dict = copy_bn(tick.bn3,back.conv3.norm)
                 back.conv3.norm.load_state_dict(back_bn_state_dict)
 
+                print("Still left for resnet 50")
+                exit()
+
+
             backbone_block[i] = back
-  
-def get_binary_mask(model,mask):
-
-    state_dict = model.state_dict()
-    new_mask = {}
-    for name in mask:
-        if name in state_dict and  ('backbone' in name) and ('bottom_up' in name): 
-
-            model_param = state_dict[name].clone()
-            model_param[model_param!=0] = 1
-            new_mask[name] = model_param.byte().float()
-
-    return new_mask
-
-def copy_bn(ticket_bn,model_bn):
-    tick_state_dict = ticket_bn.state_dict()
-    mod_state_dict = model_bn.state_dict()
-
-    for key in mod_state_dict.keys():
-        mod_state_dict[key] = tick_state_dict[key]
-
-    return mod_state_dict    
-
-
-def compare_bnorm(back_bnorm,tick_bnorm):
-  
-    back_norm_state_dict = back_bnorm.state_dict()
-    tick_norm_state_dict = tick_bnorm.state_dict()
-
-    for k in back_norm_state_dict.keys():
-        if tick_norm_state_dict[k] != back_norm_state_dict[k]:
-            return False
-    return True
-
-def compare_block(ticket_block,back_block):
-
-
-    #Conv1 and bnorm
-    assert torch.all(back_block[0].conv1.weight ==  ticket_block[0].conv1.weight)
-    assert compare_bnorm(back_block[0].norm,ticket_block[0].bn1)
-
-    #Conv2 and bnorm
-    assert torch.all(back_block[0].conv2.weight == ticket_block[0].conv2.weight)
-    assert compare_bnorm(back_block[0].conv2.norm,ticket_block[0].bn2)
-
-    #Shortcut/downsample
-    assert torch.all(back_block[0].shortcut)
-
-
-def check_transfer(back,ticket_model):
-
-    mod_state_dict = back.state_dict()
-    tick_state_dict = ticket_model.state_dict()
-
-    mod_names = list(mod_state_dict.keys())
-
-    tick_names = list(tick_state_dict.keys())
-    tick_names = [x for x in tick_names if 'num_batches' not in x]
-    tick_names = [x for x in tick_names if 'fc' not in x]
-
-    #breakpoint()
-
-    for i in range(len(tick_names)):
-        mod_param = mod_state_dict[ mod_names[i]  ]
-        tick_param = tick_state_dict[ tick_names[i] ]
-
-        if 'res3' in mod_names[i]:
-            break
-
-        print(mod_names[i],tick_names[i],mod_param.shape,tick_param.shape)
-        print(torch.all(mod_param==tick_param).item())
-
-    compare_block(back.res3,ticket_model.layer2)
-
-    breakpoint()
-
-    # for ((mod_name,mod_param),(tick_name,tick_param)) in zip(back.named_parameters(),ticket_model.named_parameters()):
-    #     #tick_param = tick_state_dict[name]
-
-    #     print(mod_name,tick_name,mod_param.shape,tick_param.shape)
-    #     print(torch.all(mod_param==tick_param).item())
-
-
-    #breakpoint()
 
 
 def transfer_ticket(model,imagenet_ticket,imagenet_ticket_type):
@@ -401,18 +416,9 @@ def transfer_ticket(model,imagenet_ticket,imagenet_ticket_type):
         model.backbone.bottom_up.stem.conv1.norm.load_state_dict(mod_bn_state_dict)
         
 
-        #breakpoint()
-
-        #model.backbone.bottom_up.stem.conv1 = ticket_model.module.conv1
-
-        #Convert bnorm from ticket to frozen bnorm. It is a class method
-        # model.backbone.bottom_up.stem.conv1.norm = FrozenBatchNorm2d.convert_frozen_batchnorm(\
-        #     ticket_model.module.bn1)
-
         #detectron2 backbone has relu in forward 
         # Line 88 out = F.relu_(out) detectron2/modelling/backbone/resnet.py
 
-    #breakpoint()
 
     #Replace res2
     replace_block(model.backbone.bottom_up.res2,ticket_model.module.layer1,imagenet_ticket_type)
@@ -456,7 +462,7 @@ def transfer_ticket(model,imagenet_ticket,imagenet_ticket_type):
 
     print(f'Mask: {n_zeros_mask/n_params_mask} Total: {total_zeros/total_params} Params: {n_zeros/n_params}')
 
-    #check_transfer(model.backbone.bottom_up,ticket_model.module)    
+    check_transfer(model.backbone.bottom_up,ticket_model.module,imagenet_ticket_type)    
 
     return new_mask
 
@@ -516,7 +522,7 @@ def main(args):
         new_mask = transfer_ticket(trainer.model.module,cfg['IMAGENET_TICKET'],\
            cfg['IMAGENET_TICKET_TYPE'])
 
-        #new_mask = transfer_ticket(torch.nn.DataParallel(trainer.model).module,cfg['IMAGENET_TICKET'],\
+        # new_mask = transfer_ticket(torch.nn.DataParallel(trainer.model).module,cfg['IMAGENET_TICKET'],\
         #   cfg['IMAGENET_TICKET_TYPE'])
 
         #We have to ensure the same stuff is frozen before and after transfer
@@ -528,18 +534,6 @@ def main(args):
             param.requires_grad = before_grad[name]
             after_grad[name] = param.requires_grad
 
-
-        count_zeros(trainer.model.module.backbone.bottom_up)
-
-        for name,param in trainer.model.state_dict().items():
-            if name.strip('module.') in new_mask.keys():
-                param *= new_mask[name.strip('module.')]
-                print(name,param.shape,new_mask[name.strip('module.')].shape)
-                #print(name)
-
-        
-        count_zeros(trainer.model.module.backbone.bottom_up,conv_only=True)
-        print('\nDone')
 
         with open('after_model.pkl','wb') as fout:
             pickle.dump(trainer.model.module,fout)        
@@ -581,28 +575,11 @@ def main(args):
         lth_pruner.mask = new_mask
 
 
-    # #Load late reset weights.
-    # trainer.model.module.load_state_dict(late_reset_ckpt['model'])
-    # print("Loaded ",cfg['LATE_RESET_CKPT'],' to model and pruning it\n')
-
-    # lth_pruner.generate_new_mask(trainer.model,1)
-    # lth_pruner.apply_mask(trainer.model)
-
-
-
     #*************************************************************************#
         #Some printing of zero count and param count (module and layerwise)
     #*************************************************************************#
     num_zero_per,_ = lth_pruner.count_zeros(trainer.model)
     print('Model zero count: ',num_zero_per)
-    # n_params = 0
-    # n_zeros = 0
-
-    # for name, param in trainer.model.named_parameters():
-    #     # print(name, param.size())
-    #     n_params += param.numel()
-    #     n_zeros += torch.sum(param==0).item()
-    # print('Zero percentage: {}'.format(n_zeros/n_params))
 
     total_params = 0
     module_wise_params = {}
@@ -624,7 +601,7 @@ def main(args):
 
     #*********************************************************************#
 
-    #print("Transferred ticket part: zeros ")
+    print("Transferred ticket part: zeros ")
     count_zeros(trainer.model.module.backbone.bottom_up)
     print('\n')
 

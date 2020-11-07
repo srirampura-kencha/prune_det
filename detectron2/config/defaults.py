@@ -615,6 +615,14 @@ _C.CUDNN_BENCHMARK = False
 # Set to 0 to disable.
 _C.VIS_PERIOD = 0
 
+#Adding Lottery parameters.
+_C.LOTTERY_KEEP_PERCENTAGE = 0.0
+_C.NUM_ROUNDS = 2
+_C.LATE_RESET_CKPT = None
+
+_C.IMAGENET_TICKET = None
+_C.IMAGENET_TICKET_TYPE = None
+
 # global config is for quick hack purposes.
 # You can set them in command line or config files,
 # and access it with:

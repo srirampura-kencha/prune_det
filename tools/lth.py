@@ -175,8 +175,8 @@ class lth:
 			n_params += param.numel()
 			n_zeros += torch.sum(param==0).item()
 		print('Zero percentage: {}'.format(n_zeros/n_params))
-
-
+		num_zero_percentage = n_zeros / n_params
+		return num_zero_percentage,n_params
 
 if __name__ == '__main__':
 

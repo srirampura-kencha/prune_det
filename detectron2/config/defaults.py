@@ -618,10 +618,10 @@ _C.VIS_PERIOD = 0
 #Adding Lottery parameters.
 _C.LOTTERY_KEEP_PERCENTAGE = 0.0
 _C.NUM_ROUNDS = 2
-_C.LATE_RESET_CKPT = None
+_C.LATE_RESET_CKPT = ''
 
-_C.IMAGENET_TICKET = None
-_C.IMAGENET_TICKET_TYPE = None
+_C.IMAGENET_TICKET = ''
+_C.IMAGENET_TICKET_TYPE = ''
 
 # global config is for quick hack purposes.
 # You can set them in command line or config files,

@@ -138,6 +138,13 @@ def count_zeros(model,conv_only=False):
         n_zeros += torch.sum(param==0).item()
     print('Zero percentage: {}'.format(n_zeros/n_params))
 
+def count_zeros_mask(mask):
+    n_params = 0
+    n_ones = 0
+    for name in mask:
+        n_params += mask[name].numel()
+        n_ones += (mask[name].sum())
+    print('Zero percentage: {}'.format(1 - n_ones/n_params))
 
 
 def apply_mask(model,mask):
@@ -560,7 +567,7 @@ def main(args):
         print('lth zeros: ')
         print(lth_pruner.count_zeros(trainer.model.module.backbone.bottom_up))
 
-    else:
+    elif cfg['LATE_RESET_CKPT']!='':
         #Load late reset ckpt.
         late_reset_ckpt = torch.load(cfg['LATE_RESET_CKPT'])
 
@@ -584,6 +591,20 @@ def main(args):
         lth_pruner.init_state_dict = late_reset_ckpt['model']
         lth_pruner.init_opt_state_dict = late_reset_ckpt['optimizer']
         lth_pruner.mask = new_mask
+
+    elif cfg['PRUNE_RESUME']:
+        #Resume pruning. Late reset ckpt should be set to ''
+        #Create mask for existing epoch and resume pruning. 
+        og_mask,n_dims = create_mask(torch.nn.DataParallel(trainer.model).module)
+
+        mask = {}
+        for k in og_mask.keys():        
+            if 'backbone' and 'bottom_up' in k:
+                mask[k] = og_mask[k]
+
+        new_mask = get_binary_mask(torch.nn.DataParallel(trainer.model).module,mask)
+
+        #breakpoint()
 
 
     #*************************************************************************#

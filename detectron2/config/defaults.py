@@ -623,6 +623,8 @@ _C.LATE_RESET_CKPT = ''
 _C.IMAGENET_TICKET = ''
 _C.IMAGENET_TICKET_TYPE = ''
 
+_C.PRUNE_RESUME = True
+
 # global config is for quick hack purposes.
 # You can set them in command line or config files,
 # and access it with:

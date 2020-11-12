@@ -262,9 +262,6 @@ def compare_block(back_block,ticket_block,imagenet_ticket_type,shortcut=True):
 
     print("TRUE")
 
-    if imagenet_ticket_type == 'res50':
-        pass
-
 
 
 def check_transfer(back,ticket_model,imagenet_ticket_type):
@@ -604,7 +601,7 @@ def main(args):
 
         new_mask = get_binary_mask(torch.nn.DataParallel(trainer.model).module,mask)
 
-        #breakpoint()
+        breakpoint()
 
 
     #*************************************************************************#

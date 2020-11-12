@@ -236,31 +236,65 @@ def compare_bnorm(back_bnorm,tick_bnorm):
 def compare_block(back_block,ticket_block,imagenet_ticket_type,shortcut=True):
 
 
-    #SET 1
-    #Conv1 and bnorm
-    assert torch.all(back_block[0].conv1.weight ==  ticket_block[0].conv1.weight)
-    assert compare_bnorm(back_block[0].conv1.norm,ticket_block[0].bn1)
+    for i in range(len(back_block)):
 
-    #Conv2 and bnorm
-    assert torch.all(back_block[0].conv2.weight == ticket_block[0].conv2.weight)
-    assert compare_bnorm(back_block[0].conv2.norm,ticket_block[0].bn2)
+        print('set: ',i+1)
 
-    if shortcut:
-        #Shortcut/downsample
-        assert torch.all(back_block[0].shortcut.weight == ticket_block[0].downsample[0].weight)
-        assert compare_bnorm(back_block[0].shortcut.norm,ticket_block[0].downsample[1])
+        assert torch.all(back_block[i].conv1.weight ==  ticket_block[i].conv1.weight)
+        assert compare_bnorm(back_block[i].conv1.norm,ticket_block[i].bn1)
+
+        assert torch.all(back_block[i].conv2.weight == ticket_block[i].conv2.weight)
+        assert compare_bnorm(back_block[i].conv2.norm,ticket_block[i].bn2)
+
+        if shortcut and i==0:
+            #Shortcut only present in first sub-block!
+            #Shortcut/downsample
+            assert torch.all(back_block[i].shortcut.weight == ticket_block[i].downsample[0].weight)
+            assert compare_bnorm(back_block[i].shortcut.norm,ticket_block[i].downsample[1])
+
+        if imagenet_ticket_type=='res50':
+            assert torch.all(back_block[i].conv3.weight == ticket_block[i].conv3.weight)
+            assert compare_bnorm(back_block[i].conv3.norm,ticket_block[i].bn3)
 
 
-    #SET 2
-    #Conv1 and bnorm
-    assert torch.all(back_block[1].conv1.weight ==  ticket_block[1].conv1.weight)
-    assert compare_bnorm(back_block[1].conv1.norm,ticket_block[1].bn1)
 
-    #Conv2 and bnorm
-    assert torch.all(back_block[1].conv2.weight == ticket_block[1].conv2.weight)
-    assert compare_bnorm(back_block[1].conv2.norm,ticket_block[1].bn2)
 
-    print("TRUE")
+    # #SET 1
+    # #Conv1 and bnorm
+    # assert torch.all(back_block[0].conv1.weight ==  ticket_block[0].conv1.weight)
+    # assert compare_bnorm(back_block[0].conv1.norm,ticket_block[0].bn1)
+
+    # #Conv2 and bnorm
+    # assert torch.all(back_block[0].conv2.weight == ticket_block[0].conv2.weight)
+    # assert compare_bnorm(back_block[0].conv2.norm,ticket_block[0].bn2)
+
+    # if imagenet_ticket_type=='res50':
+    #     assert torch.all(back_block[0].conv3.weight == ticket_block[0].conv3.weight)
+    #     assert compare_bnorm(back_block[0].conv3.norm,ticket_block[0].bn3)
+
+
+    # if shortcut:
+    #     #Shortcut/downsample
+    #     assert torch.all(back_block[0].shortcut.weight == ticket_block[0].downsample[0].weight)
+    #     assert compare_bnorm(back_block[0].shortcut.norm,ticket_block[0].downsample[1])
+
+    # #SET 2
+    # #Conv1 and bnorm
+    # assert torch.all(back_block[1].conv1.weight ==  ticket_block[1].conv1.weight)
+    # assert compare_bnorm(back_block[1].conv1.norm,ticket_block[1].bn1)
+
+    # #Conv2 and bnorm
+    # assert torch.all(back_block[1].conv2.weight == ticket_block[1].conv2.weight)
+    # assert compare_bnorm(back_block[1].conv2.norm,ticket_block[1].bn2)
+
+    #breakpoint()
+    # if imagenet_ticket_type =='res50':
+    #     #Conv 3 and bnorm: set 2    
+    #     assert torch.all(back_block[1].conv1.weight ==  ticket_block[0].conv1.weight)
+    #     assert compare_bnorm(back_block[1].conv1.norm,ticket_block[0].bn1)
+
+
+    print("TRUE: All layer transfer check complete")
 
 
 

@@ -24,7 +24,7 @@
 # 	MODEL.WEIGHTS  output/keypoint_r18_fpn_warm1k_lr.015/model_final.pth
 
 
-python tools/train_net.py --num-gpus 2 --resume \
+python tools/train_net.py --num-gpus 4 --resume \
   --config-file configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml \
 	MODEL.MASK_ON True \
 	SOLVER.BASE_LR 0.015 \

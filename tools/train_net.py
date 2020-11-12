@@ -277,12 +277,17 @@ def check_transfer(back,ticket_model,imagenet_ticket_type):
         mod_param = mod_state_dict[ mod_names[i]  ]
         tick_param = tick_state_dict[ tick_names[i] ]
 
-        if 'res3' in mod_names[i]:
+        if 'res2' in mod_names[i]:
             break
+
         print(mod_names[i],tick_names[i],mod_param.shape,tick_param.shape)
         print(torch.all(mod_param==tick_param).item())
 
-    compare_block(back.res2,ticket_model.layer1,imagenet_ticket_type,shortcut=False)
+    if imagenet_ticket_type=='res18':
+        compare_block(back.res2,ticket_model.layer1,imagenet_ticket_type,shortcut=False)
+    else:
+        compare_block(back.res2,ticket_model.layer1,imagenet_ticket_type)
+
     compare_block(back.res3,ticket_model.layer2,imagenet_ticket_type)
     compare_block(back.res4,ticket_model.layer3,imagenet_ticket_type)
     compare_block(back.res5,ticket_model.layer4,imagenet_ticket_type)
@@ -302,6 +307,7 @@ def replace_block(backbone_block,ticket_block,imagenet_ticket_type,shortcut=Fals
         tick_state_dict = tick.state_dict()
         back_state_dict = back.state_dict()
 
+        print('Len: ',len(backbone_block))
 
         for i in range(len(backbone_block)):
             back = backbone_block[i]
@@ -365,8 +371,8 @@ def replace_block(backbone_block,ticket_block,imagenet_ticket_type,shortcut=Fals
                 back_bn_state_dict = copy_bn(tick.bn3,back.conv3.norm)
                 back.conv3.norm.load_state_dict(back_bn_state_dict)
 
-                print("Still left for resnet 50")
-                exit()
+                #print("Still left for resnet 50")
+                #breakpoint()
 
 
             backbone_block[i] = back
@@ -394,8 +400,8 @@ def transfer_ticket(model,imagenet_ticket,imagenet_ticket_type):
     ticket_model.load_state_dict(state['state_dict'])
 
 
-    with open('ticket_model.pkl','wb') as fout:
-        pickle.dump(ticket_model.module,fout)        
+    # with open('ticket_model.pkl','wb') as fout:
+    #     pickle.dump(ticket_model.module,fout)        
 
 
     module_names = []
@@ -421,7 +427,10 @@ def transfer_ticket(model,imagenet_ticket,imagenet_ticket_type):
 
 
     #Replace res2
-    replace_block(model.backbone.bottom_up.res2,ticket_model.module.layer1,imagenet_ticket_type)
+    if imagenet_ticket_type == 'res18':
+        replace_block(model.backbone.bottom_up.res2,ticket_model.module.layer1,imagenet_ticket_type,shortcut=False)
+    else:
+        replace_block(model.backbone.bottom_up.res2,ticket_model.module.layer1,imagenet_ticket_type,shortcut=True)
     
     #In these blocks we need to replace the original downsample layers with "shortcut" in backbone
     #replace res3
@@ -462,7 +471,11 @@ def transfer_ticket(model,imagenet_ticket,imagenet_ticket_type):
 
     print(f'Mask: {n_zeros_mask/n_params_mask} Total: {total_zeros/total_params} Params: {n_zeros/n_params}')
 
+    #breakpoint()
+
     check_transfer(model.backbone.bottom_up,ticket_model.module,imagenet_ticket_type)    
+
+
 
     return new_mask
 
@@ -505,14 +518,12 @@ def main(args):
     trainer = Trainer(cfg)
 
     #This resumes weights.
+    #If resume=True, it loads weights from cfg.model.weights
     trainer.resume_or_load(resume=args.resume)
-
-    # with open('before_model.pkl','wb') as fout:
-    #     pickle.dump(trainer.model.module,fout)        
 
 
     #Class only used to store weights and mask.
-    if cfg['IMAGENET_TICKET'] is not None:
+    if cfg['IMAGENET_TICKET']!='':
 
         before_grad = {}
         for name, param in trainer.model.named_parameters():
@@ -535,8 +546,8 @@ def main(args):
             after_grad[name] = param.requires_grad
 
 
-        with open('after_model.pkl','wb') as fout:
-            pickle.dump(trainer.model.module,fout)        
+        # with open('after_model.pkl','wb') as fout:
+        #     pickle.dump(trainer.model.module,fout)        
 
 
         lth_pruner = lth.lth(trainer.model,keep_percentage=cfg['LOTTERY_KEEP_PERCENTAGE'],\
@@ -602,7 +613,7 @@ def main(args):
     #*********************************************************************#
 
     print("Transferred ticket part: zeros ")
-    count_zeros(trainer.model.module.backbone.bottom_up)
+    count_zeros(trainer.model.module.backbone.bottom_up,conv_only=True)
     print('\n')
 
     #*********************************************************************#    

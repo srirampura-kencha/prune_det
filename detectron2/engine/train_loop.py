@@ -277,12 +277,12 @@ class SimpleTrainer(TrainerBase):
             n_zeros = 0
             n_params = 0
             for name, param in self.model.module.state_dict().items():
-
+                
                 if name in self.lth_pruner.mask:
                     param *= self.lth_pruner.mask[name]
                     n_zeros += torch.sum(self.lth_pruner.mask[name]==0).item()
                     n_params += self.lth_pruner.mask[name].numel()
-           
+
             #count_zeros(self.model.module,suffix='Post_masking')
 
     def _write_metrics(self, loss_dict: Dict[str, torch.Tensor], data_time: float):

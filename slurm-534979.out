@@ -1,0 +1,42 @@
++ module add gcc cuda cudnn
+++ /usr/bin/modulecmd bash add gcc cuda cudnn
++ eval CC=/opt/local/stow/gcc-9.3.0/bin/gcc ';export' 'CC;CPATH=/opt/common/cudnn/cudnn-10.0-7.6.5/include:/opt/common/cuda/cuda-10.0.130/include:/opt/local/stow/gcc-9.3.0/include:/opt/local/stow/cloog-0.18.4/include' ';export' 'CPATH;CPPFLAGS=-I/opt/local/stow/isl-0.16.1/include\' '-I/opt/local/stow/mpc-1.0.3/include\' '-I/opt/local/stow/mpfr-3.1.4/include\' -I/opt/local/stow/gmp-6.1.1/include ';export' 'CPPFLAGS;CUDA_HOME=/opt/common/cuda/cuda-10.0.130' ';export' 'CUDA_HOME;CXX=/opt/local/stow/gcc-9.3.0/bin/g++' ';export' 'CXX;LDFLAGS=-L/opt/local/stow/isl-0.16.1/lib\' '-L/opt/local/stow/mpc-1.0.3/lib\' '-L/opt/local/stow/mpfr-3.1.4/lib\' -L/opt/local/stow/gmp-6.1.1/lib ';export' 'LDFLAGS;LD_LIBRARY_PATH=/opt/common/cudnn/cudnn-10.0-7.6.5/lib64:/opt/common/cuda/cuda-10.0.130/lib64:/opt/local/stow/gcc-9.3.0/lib64:/opt/local/stow/gcc-9.3.0/lib:/vulcan/scratch/kampta/.local/torch/lib:' ';export' 'LD_LIBRARY_PATH;LD_RUN_PATH=/opt/common/cudnn/cudnn-10.0-7.6.5/lib64:/usr/lib64/nvidia:/usr/lib/nvidia:/opt/common/cuda/cuda-10.0.130/lib64:/opt/common/cuda/cuda-10.0.130/lib:/opt/local/stow/gcc-9.3.0/lib64:/opt/local/stow/gcc-9.3.0/lib:/opt/local/stow/isl-0.16.1/lib:/opt/local/stow/cloog-0.18.4/lib:/opt/local/stow/mpc-1.0.3/lib:/opt/local/stow/mpfr-3.1.4/lib:/opt/local/stow/gmp-6.1.1/lib' ';export' 'LD_RUN_PATH;LIBRARY_PATH=/opt/common/cudnn/cudnn-10.0-7.6.5/lib64:/usr/lib64/nvidia:/usr/lib/nvidia:/opt/common/cuda/cuda-10.0.130/lib64:/opt/common/cuda/cuda-10.0.130/lib:/opt/local/stow/gcc-9.3.0/lib64:/opt/local/stow/gcc-9.3.0/lib:/opt/local/stow/cloog-0.18.4/lib' ';export' 'LIBRARY_PATH;LOADEDMODULES=gmp/6.1.1:mpfr/3.1.4:mpc/1.0.3:ppl/1.2:cloog/0.18.4:dejagnu/1.6:autogen/5.18.7:isl/0.16.1:gcc/9.3.0:cuda/10.0.130:cudnn/v7.6.5' ';export' 'LOADEDMODULES;MANPATH=/opt/local/stow/gcc-9.3.0/share/man:/opt/local/stow/autogen-5.18.7/share/man:/opt/local/stow/dejagnu-1.6/share/man:/opt/local/stow/ppl-1.2/share/man:/opt/puppetlabs/puppet/share/man' ';export' 'MANPATH;PATH=/opt/common/cuda/cuda-10.0.130/bin:/opt/local/stow/gcc-9.3.0/bin:/opt/local/stow/autogen-5.18.7/bin:/opt/local/stow/dejagnu-1.6/bin:/opt/local/stow/cloog-0.18.4/bin:/opt/local/stow/ppl-1.2/bin:/vulcanscratch/kampta/anaconda/envs/py36/bin:/vulcanscratch/kampta/anaconda/condabin:/vulcan/scratch/kampta/.local/torch/bin:/opt/local/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin' ';export' 'PATH;PKG_CONFIG_PATH=/opt/common/cuda/cuda-10.0.130/pkgconfig:/opt/local/stow/isl-0.16.1/lib/pkgconfig:/opt/local/stow/cloog-0.18.4/lib/pkgconfig' ';export' 'PKG_CONFIG_PATH;PPL_PATH=/opt/local/stow/ppl-1.2' ';export' 'PPL_PATH;_LMFILES_=/opt/local/stow/.modulefiles/gmp/6.1.1:/opt/local/stow/.modulefiles/mpfr/3.1.4:/opt/local/stow/.modulefiles/mpc/1.0.3:/opt/local/stow/.modulefiles/ppl/1.2:/opt/local/stow/.modulefiles/cloog/0.18.4:/opt/local/stow/.modulefiles/dejagnu/1.6:/opt/local/stow/.modulefiles/autogen/5.18.7:/opt/local/stow/.modulefiles/isl/0.16.1:/opt/local/stow/.modulefiles/gcc/9.3.0:/opt/common/.modulefiles/cuda/10.0.130:/opt/common/.modulefiles/cudnn/v7.6.5' ';export' '_LMFILES_;'
+++ CC=/opt/local/stow/gcc-9.3.0/bin/gcc
+++ export CC
+++ CPATH=/opt/common/cudnn/cudnn-10.0-7.6.5/include:/opt/common/cuda/cuda-10.0.130/include:/opt/local/stow/gcc-9.3.0/include:/opt/local/stow/cloog-0.18.4/include
+++ export CPATH
+++ CPPFLAGS='-I/opt/local/stow/isl-0.16.1/include -I/opt/local/stow/mpc-1.0.3/include -I/opt/local/stow/mpfr-3.1.4/include -I/opt/local/stow/gmp-6.1.1/include'
+++ export CPPFLAGS
+++ CUDA_HOME=/opt/common/cuda/cuda-10.0.130
+++ export CUDA_HOME
+++ CXX=/opt/local/stow/gcc-9.3.0/bin/g++
+++ export CXX
+++ LDFLAGS='-L/opt/local/stow/isl-0.16.1/lib -L/opt/local/stow/mpc-1.0.3/lib -L/opt/local/stow/mpfr-3.1.4/lib -L/opt/local/stow/gmp-6.1.1/lib'
+++ export LDFLAGS
+++ LD_LIBRARY_PATH=/opt/common/cudnn/cudnn-10.0-7.6.5/lib64:/opt/common/cuda/cuda-10.0.130/lib64:/opt/local/stow/gcc-9.3.0/lib64:/opt/local/stow/gcc-9.3.0/lib:/vulcan/scratch/kampta/.local/torch/lib:
+++ export LD_LIBRARY_PATH
+++ LD_RUN_PATH=/opt/common/cudnn/cudnn-10.0-7.6.5/lib64:/usr/lib64/nvidia:/usr/lib/nvidia:/opt/common/cuda/cuda-10.0.130/lib64:/opt/common/cuda/cuda-10.0.130/lib:/opt/local/stow/gcc-9.3.0/lib64:/opt/local/stow/gcc-9.3.0/lib:/opt/local/stow/isl-0.16.1/lib:/opt/local/stow/cloog-0.18.4/lib:/opt/local/stow/mpc-1.0.3/lib:/opt/local/stow/mpfr-3.1.4/lib:/opt/local/stow/gmp-6.1.1/lib
+++ export LD_RUN_PATH
+++ LIBRARY_PATH=/opt/common/cudnn/cudnn-10.0-7.6.5/lib64:/usr/lib64/nvidia:/usr/lib/nvidia:/opt/common/cuda/cuda-10.0.130/lib64:/opt/common/cuda/cuda-10.0.130/lib:/opt/local/stow/gcc-9.3.0/lib64:/opt/local/stow/gcc-9.3.0/lib:/opt/local/stow/cloog-0.18.4/lib
+++ export LIBRARY_PATH
+++ LOADEDMODULES=gmp/6.1.1:mpfr/3.1.4:mpc/1.0.3:ppl/1.2:cloog/0.18.4:dejagnu/1.6:autogen/5.18.7:isl/0.16.1:gcc/9.3.0:cuda/10.0.130:cudnn/v7.6.5
+++ export LOADEDMODULES
+++ MANPATH=/opt/local/stow/gcc-9.3.0/share/man:/opt/local/stow/autogen-5.18.7/share/man:/opt/local/stow/dejagnu-1.6/share/man:/opt/local/stow/ppl-1.2/share/man:/opt/puppetlabs/puppet/share/man
+++ export MANPATH
+++ PATH=/opt/common/cuda/cuda-10.0.130/bin:/opt/local/stow/gcc-9.3.0/bin:/opt/local/stow/autogen-5.18.7/bin:/opt/local/stow/dejagnu-1.6/bin:/opt/local/stow/cloog-0.18.4/bin:/opt/local/stow/ppl-1.2/bin:/vulcanscratch/kampta/anaconda/envs/py36/bin:/vulcanscratch/kampta/anaconda/condabin:/vulcan/scratch/kampta/.local/torch/bin:/opt/local/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin
+++ export PATH
+++ PKG_CONFIG_PATH=/opt/common/cuda/cuda-10.0.130/pkgconfig:/opt/local/stow/isl-0.16.1/lib/pkgconfig:/opt/local/stow/cloog-0.18.4/lib/pkgconfig
+++ export PKG_CONFIG_PATH
+++ PPL_PATH=/opt/local/stow/ppl-1.2
+++ export PPL_PATH
+++ _LMFILES_=/opt/local/stow/.modulefiles/gmp/6.1.1:/opt/local/stow/.modulefiles/mpfr/3.1.4:/opt/local/stow/.modulefiles/mpc/1.0.3:/opt/local/stow/.modulefiles/ppl/1.2:/opt/local/stow/.modulefiles/cloog/0.18.4:/opt/local/stow/.modulefiles/dejagnu/1.6:/opt/local/stow/.modulefiles/autogen/5.18.7:/opt/local/stow/.modulefiles/isl/0.16.1:/opt/local/stow/.modulefiles/gcc/9.3.0:/opt/common/.modulefiles/cuda/10.0.130:/opt/common/.modulefiles/cudnn/v7.6.5
+++ export _LMFILES_
++ export WORK_DIR=/scratch0/slurm_534979
++ WORK_DIR=/scratch0/slurm_534979
++ export PYTHONPATH=.:
++ PYTHONPATH=.:
++ srun bash -c 'mkdir /scratch0/slurm_534979'
++ srun rsync -a '--exclude=*.out' /scratch0/slurm_534979
+drwxrwxr-x              6 2020/11/12 18:35:46 slurm_534979
++ srun bash -c 'cd /scratch0/slurm_534979'
++ srun python -u tools/train_net.py --num-gpus 4 --resume --config-file configs/COCO-InstanceSegmentation/mask_rcnn_r18_FPN_1x.yaml MODEL.MASK_ON True SOLVER.BASE_LR 0.015 SOLVER.WARMUP_ITERS 5000 SOLVER.WARMUP_FACTOR 2e-4 LOTTERY_KEEP_PERCENTAGE 0.4 NUM_ROUNDS 2 OUTPUT_DIR /fs/vulcan-projects/pruning_sgirish/prune-det/output/mask_rcnn_r18_fpn_warm5k_lr_0.015_prune_40_late_reset/ LATE_RESET_CKPT /fs/vulcan-projects/pruning_sgirish/prune-det/output/mask_r18_fpn_warm5k_lr.015/model_0007329.pth MODEL.WEIGHTS /fs/vulcan-projects/pruning_sgirish/prune-det/output/mask_r18_fpn_warm5k_lr.015/model_final.pth

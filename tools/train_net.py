@@ -598,44 +598,49 @@ def main(args):
         print('lth zeros: ')
         print(lth_pruner.count_zeros(trainer.model.module.backbone.bottom_up))
 
+    # elif cfg['PRUNE_RESUME']:
+    #     #Resume pruning. Late reset ckpt should be set to ''
+    #     #Create mask for existing epoch and resume pruning. 
+    #     og_mask,n_dims = create_mask(torch.nn.DataParallel(trainer.model).module)
+
+    #     mask = {}
+    #     for k in og_mask.keys():        
+    #         if 'backbone' and 'bottom_up' in k:
+    #             mask[k] = og_mask[k]
+
+    #     new_mask = get_binary_mask(torch.nn.DataParallel(trainer.model).module,mask)
+
+    #     breakpoint()
+
     elif cfg['LATE_RESET_CKPT']!='':
+
+        print('here')
+
         #Load late reset ckpt.
         late_reset_ckpt = torch.load(cfg['LATE_RESET_CKPT'])
 
         #gets the basic mask structure
-        og_mask,n_mask_dims = create_mask(trainer.model)
+        og_mask,n_mask_dims = create_mask(trainer.model.module)
 
         #prune and generate new mask
         print('generating new mask by pruning')
-        new_mask = generate_new_mask_prune(trainer.model,og_mask,n_mask_dims,cfg['LOTTERY_KEEP_PERCENTAGE'])
+        new_mask = generate_new_mask_prune(trainer.model.module,og_mask,n_mask_dims,cfg['LOTTERY_KEEP_PERCENTAGE'])
 
         #Load late_reset_dict
         print("Loading ",cfg['LATE_RESET_CKPT'],' late reset to model as initial\n')
         trainer.model.module.load_state_dict(late_reset_ckpt['model'])
 
         #Apply mask.
-        apply_mask(trainer.model,new_mask)    
+        apply_mask(trainer.model.module,new_mask)    
 
         lth_pruner = lth.lth(trainer.model,keep_percentage=cfg['LOTTERY_KEEP_PERCENTAGE'],\
             n_rounds=cfg['NUM_ROUNDS'])
 
         lth_pruner.init_state_dict = late_reset_ckpt['model']
         lth_pruner.init_opt_state_dict = late_reset_ckpt['optimizer']
+
         lth_pruner.mask = new_mask
 
-    elif cfg['PRUNE_RESUME']:
-        #Resume pruning. Late reset ckpt should be set to ''
-        #Create mask for existing epoch and resume pruning. 
-        og_mask,n_dims = create_mask(torch.nn.DataParallel(trainer.model).module)
-
-        mask = {}
-        for k in og_mask.keys():        
-            if 'backbone' and 'bottom_up' in k:
-                mask[k] = og_mask[k]
-
-        new_mask = get_binary_mask(torch.nn.DataParallel(trainer.model).module,mask)
-
-        breakpoint()
 
 
     #*************************************************************************#

@@ -21,8 +21,7 @@ python tools/train_net.py --num-gpus 4 --eval-only \
 	LOTTERY_KEEP_PERCENTAGE 0.3 \
 	NUM_ROUNDS 2 \
 	OUTPUT_DIR output/keypoint_rcnn_r18_fpn_warm2k_lr_0.015_prune_30_late_reset  \
-	MODEL.WEIGHTS  output/keypoint_rcnn_r18_fpn_warm2k_lr_0.015_prune_30_late_reset/model_final.pth
-
+	MODEL.WEIGHTS  output/keypoint_rcnn_r18_fpn_warm2k_lr_0.015_prune_30_late_reset/model_final.pth \
 	LATE_RESET_CKPT  output/keypoint_r18_fpn_warm1k_lr.015/model_0003534.pth \
 	MODEL.WEIGHTS  output/keypoint_r18_fpn_warm1k_lr.015/model_final.pth
 

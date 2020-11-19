@@ -534,7 +534,7 @@ def main(args):
         
         #Copy weights to dummy model and obtain transfer mask
         model_copy = copy.deepcopy(trainer.model)
-        new_mask = transfer_ticket(model_copy,cfg['IMAGENET_TICKET'],\
+        new_mask = transfer_ticket(model_copy.module,cfg['IMAGENET_TICKET'],\
            cfg['IMAGENET_TICKET_TYPE'])
 
         #Apply the mask.
@@ -559,30 +559,33 @@ def main(args):
         print('lth zeros: ')
         print(lth_pruner.count_zeros(trainer.model.module.backbone.bottom_up))
 
-
-
     #*************************************************************************#
         #Some printing of zero count and param count (module and layerwise)
-    #*************************************************************************#
+   #*************************************************************************#
     num_zero_per,_ = lth_pruner.count_zeros(trainer.model)
     print('Model zero count: ',num_zero_per)
 
     total_params = 0
     module_wise_params = {}
 
+    tot_params = 0
+
     print("\nMODULE WISE param count")
     for name,module in trainer.model.module.named_children():
         num_zero_per,total_params = lth_pruner.count_zeros(module,layer_wise=False)
-        print('children: ',name,num_zero_per,total_params)
+        print('children: ',name,' percentage: ',num_zero_per,' total_params: ',total_params)
+
         temp = 0
         for p in module.parameters():
             temp += torch.numel(p)
-        total_params += temp
-        module_wise_params[name] = temp   
-    print('\n\n')  
+        #total_params += temp
+        tot_params += temp
+        module_wise_params[name] = temp
+
+    print('\n\n')
     for mod in module_wise_params:
         print(mod,module_wise_params[mod],' percentage of total: ',\
-            module_wise_params[mod]/total_params)
+            module_wise_params[mod]/tot_params)
     print('\n\n')
 
     #*********************************************************************#

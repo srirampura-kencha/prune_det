@@ -18,6 +18,7 @@ You may want to write your own script with your datasets and other customization
 
 import logging
 import os
+import copy
 from collections import OrderedDict
 import torch
 
@@ -255,45 +256,6 @@ def compare_block(back_block,ticket_block,imagenet_ticket_type,shortcut=True):
         if imagenet_ticket_type=='res50':
             assert torch.all(back_block[i].conv3.weight == ticket_block[i].conv3.weight)
             assert compare_bnorm(back_block[i].conv3.norm,ticket_block[i].bn3)
-
-
-
-
-    # #SET 1
-    # #Conv1 and bnorm
-    # assert torch.all(back_block[0].conv1.weight ==  ticket_block[0].conv1.weight)
-    # assert compare_bnorm(back_block[0].conv1.norm,ticket_block[0].bn1)
-
-    # #Conv2 and bnorm
-    # assert torch.all(back_block[0].conv2.weight == ticket_block[0].conv2.weight)
-    # assert compare_bnorm(back_block[0].conv2.norm,ticket_block[0].bn2)
-
-    # if imagenet_ticket_type=='res50':
-    #     assert torch.all(back_block[0].conv3.weight == ticket_block[0].conv3.weight)
-    #     assert compare_bnorm(back_block[0].conv3.norm,ticket_block[0].bn3)
-
-
-    # if shortcut:
-    #     #Shortcut/downsample
-    #     assert torch.all(back_block[0].shortcut.weight == ticket_block[0].downsample[0].weight)
-    #     assert compare_bnorm(back_block[0].shortcut.norm,ticket_block[0].downsample[1])
-
-    # #SET 2
-    # #Conv1 and bnorm
-    # assert torch.all(back_block[1].conv1.weight ==  ticket_block[1].conv1.weight)
-    # assert compare_bnorm(back_block[1].conv1.norm,ticket_block[1].bn1)
-
-    # #Conv2 and bnorm
-    # assert torch.all(back_block[1].conv2.weight == ticket_block[1].conv2.weight)
-    # assert compare_bnorm(back_block[1].conv2.norm,ticket_block[1].bn2)
-
-    #breakpoint()
-    # if imagenet_ticket_type =='res50':
-    #     #Conv 3 and bnorm: set 2    
-    #     assert torch.all(back_block[1].conv1.weight ==  ticket_block[0].conv1.weight)
-    #     assert compare_bnorm(back_block[1].conv1.norm,ticket_block[0].bn1)
-
-
     print("TRUE: All layer transfer check complete")
 
 
@@ -567,25 +529,24 @@ def main(args):
         for name, param in trainer.model.named_parameters():
             before_grad[name] = param.requires_grad
 
-        #This modifes trainer model module.
-        new_mask = transfer_ticket(trainer.model.module,cfg['IMAGENET_TICKET'],\
+        #Get mask Structure.
+        og_mask,n_mask_dims = create_mask(trainer.model.module)    
+        
+        #Copy weights to dummy model and obtain transfer mask
+        model_copy = copy.deepcopy(trainer.model)
+        new_mask = transfer_ticket(model_copy,cfg['IMAGENET_TICKET'],\
            cfg['IMAGENET_TICKET_TYPE'])
 
-        # new_mask = transfer_ticket(torch.nn.DataParallel(trainer.model).module,cfg['IMAGENET_TICKET'],\
-        #   cfg['IMAGENET_TICKET_TYPE'])
+        #Apply the mask.
+        apply_mask(trainer.model.module,new_mask)
+        #This works. Verified.
 
-        #We have to ensure the same stuff is frozen before and after transfer
 
         after_grad = {}
-        
         #setting default grad.
         for name, param in trainer.model.named_parameters():
             param.requires_grad = before_grad[name]
             after_grad[name] = param.requires_grad
-
-
-        # with open('after_model.pkl','wb') as fout:
-        #     pickle.dump(trainer.model.module,fout)        
 
 
         lth_pruner = lth.lth(trainer.model,keep_percentage=cfg['LOTTERY_KEEP_PERCENTAGE'],\
@@ -597,49 +558,6 @@ def main(args):
 
         print('lth zeros: ')
         print(lth_pruner.count_zeros(trainer.model.module.backbone.bottom_up))
-
-    # elif cfg['PRUNE_RESUME']:
-    #     #Resume pruning. Late reset ckpt should be set to ''
-    #     #Create mask for existing epoch and resume pruning. 
-    #     og_mask,n_dims = create_mask(torch.nn.DataParallel(trainer.model).module)
-
-    #     mask = {}
-    #     for k in og_mask.keys():        
-    #         if 'backbone' and 'bottom_up' in k:
-    #             mask[k] = og_mask[k]
-
-    #     new_mask = get_binary_mask(torch.nn.DataParallel(trainer.model).module,mask)
-
-    #     breakpoint()
-
-    elif cfg['LATE_RESET_CKPT']!='':
-
-        print('here')
-
-        #Load late reset ckpt.
-        late_reset_ckpt = torch.load(cfg['LATE_RESET_CKPT'])
-
-        #gets the basic mask structure
-        og_mask,n_mask_dims = create_mask(trainer.model.module)
-
-        #prune and generate new mask
-        print('generating new mask by pruning')
-        new_mask = generate_new_mask_prune(trainer.model.module,og_mask,n_mask_dims,cfg['LOTTERY_KEEP_PERCENTAGE'])
-
-        #Load late_reset_dict
-        print("Loading ",cfg['LATE_RESET_CKPT'],' late reset to model as initial\n')
-        trainer.model.module.load_state_dict(late_reset_ckpt['model'])
-
-        #Apply mask.
-        apply_mask(trainer.model.module,new_mask)    
-
-        lth_pruner = lth.lth(trainer.model,keep_percentage=cfg['LOTTERY_KEEP_PERCENTAGE'],\
-            n_rounds=cfg['NUM_ROUNDS'])
-
-        lth_pruner.init_state_dict = late_reset_ckpt['model']
-        lth_pruner.init_opt_state_dict = late_reset_ckpt['optimizer']
-
-        lth_pruner.mask = new_mask
 
 
 

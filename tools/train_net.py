@@ -683,6 +683,8 @@ def main(args):
         )
     trainer.lth_pruner = lth_pruner
 
+    print(trainer.model.module)
+
     return trainer.train()
 
 

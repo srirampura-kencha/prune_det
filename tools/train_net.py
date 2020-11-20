@@ -173,7 +173,10 @@ def create_mask(model):
     return mask,n_mask_dims
 
 
-def generate_new_mask_prune(model,mask,n_mask_dims,keep_percentage):
+def generate_new_mask_prune_backbone(model,mask,n_mask_dims,keep_percentage):
+
+    print("Modified function pruning only backbone")
+
     new_mask = mask 
     mask_vec = torch.zeros(n_mask_dims).to(list(new_mask.values())[0])
     start_ind = 0
@@ -187,7 +190,7 @@ def generate_new_mask_prune(model,mask,n_mask_dims,keep_percentage):
     n_zeros = 0
     new_state_dict = model.state_dict()
     for name in model.state_dict():
-        if name in new_mask:
+        if name in new_mask and 'bottom_up' in name:
             param = model.state_dict()[name]
             n_zeros += torch.sum(torch.abs(param)==0.0).item()
             mask_val = new_mask[name]
@@ -521,51 +524,58 @@ def main(args):
     #If resume=True, it loads weights from cfg.model.weights
     trainer.resume_or_load(resume=args.resume)
 
+    before_grad = {}
+    for name, param in trainer.model.named_parameters():
+        before_grad[name] = param.requires_grad
 
-    #Class only used to store weights and mask.
-    if cfg['IMAGENET_TICKET']!='':
+    
+    #*********************************************************************************************
 
-        before_grad = {}
-        for name, param in trainer.model.named_parameters():
-            before_grad[name] = param.requires_grad
+    #Copy weights to dummy model and obtain transfer mask
+    # model_copy = copy.deepcopy(trainer.model)
+    # new_mask = transfer_ticket(model_copy.module,cfg['IMAGENET_TICKET'],\
+    #    cfg['IMAGENET_TICKET_TYPE'])
+    #Apply the mask.
+    #apply_mask(trainer.model.module,new_mask)
+    #This works. Verified.
+    #del model_copy
 
-        #Get mask Structure.
-        og_mask,n_mask_dims = create_mask(trainer.model.module.backbone.bottom_up)    
-        
-        #Copy weights to dummy model and obtain transfer mask
-        model_copy = copy.deepcopy(trainer.model)
-        new_mask = transfer_ticket(model_copy.module,cfg['IMAGENET_TICKET'],\
-           cfg['IMAGENET_TICKET_TYPE'])
+    #Old method of transferring mask
+    #*********************************************************************************************
+    #breakpoint()
+    #Get mask Structure.
+    og_mask,n_mask_dims = create_mask(trainer.model.module)    
+    
+    print('generating new mask by pruning only for backbone')
+    new_mask = generate_new_mask_prune_backbone(trainer.model.module,og_mask,\
+        n_mask_dims,cfg['LOTTERY_KEEP_PERCENTAGE'])
 
-        #Apply the mask.
-        apply_mask(trainer.model.module,new_mask)
-        #This works. Verified.
-
-        del model_copy
-        after_grad = {}
-        #setting default grad.
-        for name, param in trainer.model.named_parameters():
-            param.requires_grad = before_grad[name]
-            after_grad[name] = param.requires_grad
+    #Apply the mask.
+    apply_mask(trainer.model.module,new_mask)
 
 
-        lth_pruner = lth.lth(trainer.model,keep_percentage=cfg['LOTTERY_KEEP_PERCENTAGE'],\
-            n_rounds=cfg['NUM_ROUNDS'])
+    after_grad = {}
+    #setting default grad.
+    for name, param in trainer.model.named_parameters():
+        param.requires_grad = before_grad[name]
+        after_grad[name] = param.requires_grad
 
-        lth_pruner.init_state_dict = trainer.model.state_dict()
-        lth_pruner.init_opt_state_dict = None
-        lth_pruner.mask = new_mask
 
-        print('lth zeros: ')
-        print(lth_pruner.count_zeros(trainer.model.module.backbone.bottom_up))
+    lth_pruner = lth.lth(trainer.model,keep_percentage=cfg['LOTTERY_KEEP_PERCENTAGE'],\
+        n_rounds=cfg['NUM_ROUNDS'])
+
+    lth_pruner.init_state_dict = trainer.model.state_dict()
+    lth_pruner.init_opt_state_dict = None
+    lth_pruner.mask = new_mask
 
     #*************************************************************************#
         #Some printing of zero count and param count (module and layerwise)
    #*************************************************************************#
     num_zero_per,_ = lth_pruner.count_zeros(trainer.model)
-    print('Model zero count: ',num_zero_per)
+    print('total zero count: ',num_zero_per)
 
-    total_params = 0
+
+
     module_wise_params = {}
 
     tot_params = 0

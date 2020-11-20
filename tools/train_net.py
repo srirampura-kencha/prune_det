@@ -530,7 +530,7 @@ def main(args):
             before_grad[name] = param.requires_grad
 
         #Get mask Structure.
-        og_mask,n_mask_dims = create_mask(trainer.model.module)    
+        og_mask,n_mask_dims = create_mask(trainer.model.module.backbone.bottom_up)    
         
         #Copy weights to dummy model and obtain transfer mask
         model_copy = copy.deepcopy(trainer.model)
@@ -541,7 +541,7 @@ def main(args):
         apply_mask(trainer.model.module,new_mask)
         #This works. Verified.
 
-
+        del model_copy
         after_grad = {}
         #setting default grad.
         for name, param in trainer.model.named_parameters():

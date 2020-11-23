@@ -625,6 +625,9 @@ _C.IMAGENET_TICKET_TYPE = ''
 
 _C.PRUNE_RESUME = True
 
+_C.SOURCE_TASK = ''
+_C.SOURCE_MODEL = ''
+
 # global config is for quick hack purposes.
 # You can set them in command line or config files,
 # and access it with:

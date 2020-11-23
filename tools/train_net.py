@@ -204,16 +204,14 @@ def generate_new_mask_prune_backbone(model,mask,n_mask_dims,keep_percentage):
     return mask
 
   
-def get_binary_mask(model,mask):
+def get_binary_mask(state_dict):
 
-    state_dict = model.state_dict()
     new_mask = {}
-    for name in mask:
-        if name in state_dict and  ('backbone' in name) and ('bottom_up' in name): 
-
-            model_param = state_dict[name].clone()
-            model_param[model_param!=0] = 1
-            new_mask[name] = model_param.byte().float()
+    for name in state_dict.keys():
+        #if name in state_dict and  ('backbone' in name) and ('bottom_up' in name): 
+        model_param = state_dict[name].clone()
+        model_param[model_param!=0] = 1
+        new_mask[name] = model_param.byte().float().cuda()
 
     return new_mask
 
@@ -482,6 +480,21 @@ def transfer_ticket(model,imagenet_ticket,imagenet_ticket_type):
 
     return new_mask
 
+def get_task_mask(og_mask,source_task_mask,source_task_name):
+
+    if source_task_name =='det':
+        flag_key = 'mask_head'
+    elif source_task_name =='key':
+        flag_key = 'keypoint_head'
+
+    for name in source_task_mask:
+        #if source_task_name =='det':
+        if name in og_mask and 'box_predictor' not in name and flag_key not in name:
+            og_mask[name] = source_task_mask[name]
+
+    return og_mask
+
+
 
 def setup(args):
     """
@@ -524,34 +537,38 @@ def main(args):
     #If resume=True, it loads weights from cfg.model.weights
     trainer.resume_or_load(resume=args.resume)
 
+    #print('uncomment this for mulit-gpu')
+    #trainer.model = torch.nn.DataParallel(trainer.model)
+
     before_grad = {}
     for name, param in trainer.model.named_parameters():
         before_grad[name] = param.requires_grad
 
     
-    #*********************************************************************************************
-
-    #Copy weights to dummy model and obtain transfer mask
-    # model_copy = copy.deepcopy(trainer.model)
-    # new_mask = transfer_ticket(model_copy.module,cfg['IMAGENET_TICKET'],\
-    #    cfg['IMAGENET_TICKET_TYPE'])
-    #Apply the mask.
-    #apply_mask(trainer.model.module,new_mask)
-    #This works. Verified.
-    #del model_copy
-
-    #Old method of transferring mask
-    #*********************************************************************************************
     #breakpoint()
+
+    source_model_state = torch.load(cfg['SOURCE_MODEL'])['model']
+    source_task_name = cfg['SOURCE_TASK']
+
+    #get complete_mask
+    source_task_mask = get_binary_mask(source_model_state)
+
     #Get mask Structure.
     og_mask,n_mask_dims = create_mask(trainer.model.module)    
     
-    print('generating new mask by pruning only for backbone')
-    new_mask = generate_new_mask_prune_backbone(trainer.model.module,og_mask,\
-        n_mask_dims,cfg['LOTTERY_KEEP_PERCENTAGE'])
+    #breakpoint()
+    new_mask = get_task_mask(og_mask,source_task_mask,source_task_name)
+
+
+    # print('generating new mask by pruning only for backbone')
+    # new_mask = generate_new_mask_prune_backbone(trainer.model.module,og_mask,\
+    #     n_mask_dims,cfg['LOTTERY_KEEP_PERCENTAGE'])
 
     #Apply the mask.
     apply_mask(trainer.model.module,new_mask)
+
+    print('deleting model to save mem\n')
+    del source_model_state
 
 
     after_grad = {}
@@ -578,6 +595,8 @@ def main(args):
 
     module_wise_params = {}
 
+    roi_module_wise = {}
+
     tot_params = 0
 
     print("\nMODULE WISE param count")
@@ -592,19 +611,24 @@ def main(args):
         tot_params += temp
         module_wise_params[name] = temp
 
+        if name =='roi_heads':
+            
+            for nam,mod in module.named_children():
+                roi_tot = 0
+                for p in mod.parameters():
+                    roi_tot += torch.numel(p)
+                roi_module_wise[nam] = roi_tot
+
     print('\n\n')
     for mod in module_wise_params:
         print(mod,module_wise_params[mod],' percentage of total: ',\
             module_wise_params[mod]/tot_params)
     print('\n\n')
 
-    #*********************************************************************#
-
-    print("Transferred ticket part: zeros ")
-    count_zeros(trainer.model.module.backbone.bottom_up,conv_only=True)
+    print("ROI wise\n")
+    for m in roi_module_wise:
+        print(m,roi_module_wise[m],' per of total: ',roi_module_wise[m]/tot_params)
     print('\n')
-
-    #*********************************************************************#    
 
     torch.save({'model': trainer.model.state_dict()}, cfg['OUTPUT_DIR'] + '/model_0000000.pth')    
 

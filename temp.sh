@@ -1,5 +1,5 @@
 
-python tools/train_net.py --num-gpus 2 --resume \
+python tools/train_net.py --num-gpus 4 --resume \
   --config-file configs/COCO-InstanceSegmentation/mask_rcnn_r18_FPN_1x.yaml \
 	MODEL.MASK_ON True \
 	SOLVER.BASE_LR 0.015 \
@@ -8,8 +8,8 @@ python tools/train_net.py --num-gpus 2 --resume \
 	LOTTERY_KEEP_PERCENTAGE 0.3 \
 	NUM_ROUNDS 2 \
 	OUTPUT_DIR temp/ \
-	LATE_RESET_CKPT  output/mask_r18_fpn_warm5k_lr0.15/model_0007329.pth \
-	MODEL.WEIGHTS  output/mask_r18_fpn_warm5k_lr0.15/model_final.pth
+	LATE_RESET_CKPT  output/mask_r18_fpn_warm5k_lr.015/model_0007329.pth \
+	MODEL.WEIGHTS  output/mask_r18_fpn_warm5k_lr.015/model_final.pth
 
 # python tools/train_net.py --num-gpus 2 --resume \
 #   --config-file configs/COCO-InstanceSegmentation/mask_rcnn_r18_FPN_1x.yaml \

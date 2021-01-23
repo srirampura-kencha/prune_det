@@ -558,7 +558,7 @@ def main(args):
     #This resumes weights.
     #If resume=True, it loads weights from cfg.model.weights
     trainer.resume_or_load(resume=args.resume)
-
+    count_zeros(trainer.model)
 
     #Class only used to store weights and mask.
     if cfg['IMAGENET_TICKET']!='':
@@ -598,19 +598,13 @@ def main(args):
         print('lth zeros: ')
         print(lth_pruner.count_zeros(trainer.model.module.backbone.bottom_up))
 
-    # elif cfg['PRUNE_RESUME']:
-    #     #Resume pruning. Late reset ckpt should be set to ''
-    #     #Create mask for existing epoch and resume pruning. 
-    #     og_mask,n_dims = create_mask(torch.nn.DataParallel(trainer.model).module)
 
-    #     mask = {}
-    #     for k in og_mask.keys():        
-    #         if 'backbone' and 'bottom_up' in k:
-    #             mask[k] = og_mask[k]
-
-    #     new_mask = get_binary_mask(torch.nn.DataParallel(trainer.model).module,mask)
-
-    #     breakpoint()
+        """
+            REBUTTAL BRANCH:
+                Here we do pruning of only the backbone, ie: model.module.backbone.bottom_up layers only. 
+                Similar to what we do inside transfer_ticket() 
+                We leave the FPN layers untouched. 
+        """
 
     elif cfg['LATE_RESET_CKPT']!='':
 
@@ -619,19 +613,20 @@ def main(args):
         #Load late reset ckpt.
         late_reset_ckpt = torch.load(cfg['LATE_RESET_CKPT'])
 
+        #breakpoint()
         #gets the basic mask structure
-        og_mask,n_mask_dims = create_mask(trainer.model.module)
+        og_mask,n_mask_dims = create_mask(trainer.model.module.backbone.bottom_up)
 
         #prune and generate new mask
         print('generating new mask by pruning')
-        new_mask = generate_new_mask_prune(trainer.model.module,og_mask,n_mask_dims,cfg['LOTTERY_KEEP_PERCENTAGE'])
+        new_mask = generate_new_mask_prune(trainer.model.module.backbone.bottom_up,og_mask,n_mask_dims,cfg['LOTTERY_KEEP_PERCENTAGE'])
 
         #Load late_reset_dict
         print("Loading ",cfg['LATE_RESET_CKPT'],' late reset to model as initial\n')
         trainer.model.module.load_state_dict(late_reset_ckpt['model'])
 
         #Apply mask.
-        apply_mask(trainer.model.module,new_mask)    
+        apply_mask(trainer.model.module.backbone.bottom_up,new_mask)    
 
         lth_pruner = lth.lth(trainer.model,keep_percentage=cfg['LOTTERY_KEEP_PERCENTAGE'],\
             n_rounds=cfg['NUM_ROUNDS'])
@@ -669,9 +664,9 @@ def main(args):
 
     #*********************************************************************#
 
-    print("Transferred ticket part: zeros ")
-    count_zeros(trainer.model.module.backbone.bottom_up,conv_only=True)
-    print('\n')
+    # print("Transferred ticket part: zeros ")
+    # count_zeros(trainer.model.module.backbone.bottom_up,conv_only=True)
+    # print('\n')
 
     #*********************************************************************#    
 

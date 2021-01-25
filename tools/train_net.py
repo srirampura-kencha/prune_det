@@ -530,6 +530,37 @@ def setup(args):
     return cfg
 
 
+def input_constructor(inp):
+    data = pickle.load(open('data.pkl','rb'))
+    return data
+
+def get_macs(trainer):
+
+    
+    data = pickle.load(open('data.pkl','rb'))
+
+    import detectron2.utils.analysis as anal
+    flops = anal.flop_count_operators(trainer.model,[data[0]])
+
+    from thop import profile,clever_format
+    macs, params = profile(trainer.model, inputs=(data, ))
+    print(macs,params)
+    macs, params = clever_format([macs, params], "%.3f")
+
+    from ptflops import get_model_complexity_info
+    macs_2, params_2 = get_model_complexity_info(trainer.model, (3, 768, 1024), as_strings=True,print_per_layer_stat=True, \
+        verbose=True,input_constructor=input_constructor)
+    #breakpoint()
+    print('ptflops results: ')
+    print(macs_2,params_2)    
+
+    print("detectron2 results: ")
+    print(flops)
+
+    print("thop results:")
+    print(macs,params,'\n')
+
+
 def main(args):
     cfg = setup(args)
 
@@ -559,6 +590,9 @@ def main(args):
     #If resume=True, it loads weights from cfg.model.weights
     trainer.resume_or_load(resume=args.resume)
     count_zeros(trainer.model)
+
+
+    #breakpoint()
 
     #Class only used to store weights and mask.
     if cfg['IMAGENET_TICKET']!='':
@@ -662,6 +696,9 @@ def main(args):
             module_wise_params[mod]/total_params)
     print('\n\n')
 
+    print("Bottom up zeros:")
+    print(count_zeros(trainer.model.module.backbone.bottom_up))
+
     #*********************************************************************#
 
     # print("Transferred ticket part: zeros ")
@@ -677,6 +714,10 @@ def main(args):
             [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
         )
     trainer.lth_pruner = lth_pruner
+
+    if cfg.TEST.COMPUTE_FLOPS:
+        print("Get MACS")
+        get_macs(trainer)
 
     return trainer.train()
 

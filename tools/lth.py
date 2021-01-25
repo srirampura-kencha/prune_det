@@ -59,7 +59,7 @@ class lth:
 				or ('fcn' in name) or ('fc1' in name) or ('fc2') in name ):
 
 				#if self.check_modules(name):
-				print('Pruning: ',name)
+				#print('Pruning: ',name)
 				self.mask[name] = torch.ones_like(param)
 				self.n_mask_dims += param.numel()
 

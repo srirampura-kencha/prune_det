@@ -21,7 +21,7 @@ python tools/train_net.py --num-gpus 2 --resume \
 	OUTPUT_DIR temp/  \
 	LATE_RESET_CKPT  output/keypoint_r18_fpn_warm1k_lr.015/model_0003534.pth \
 	MODEL.WEIGHTS  output/keypoint_r18_fpn_warm1k_lr.015/model_final.pth \
-	TEST.COMPUTE_FLOPS False
+	TEST.COMPUTE_FLOPS True
 
 # python tools/train_net.py --num-gpus 2 --resume \
 #   --config-file configs/COCO-InstanceSegmentation/mask_rcnn_r18_FPN_1x.yaml \

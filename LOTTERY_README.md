@@ -45,6 +45,25 @@ python tools/train_net.py --num-gpus 4 --resume \
 	IMAGENET_TICKET_TYPE res18 \
 	OUTPUT_DIR output/mask_transfer_keypoint_ticket_res18_fpn_warm2k_lr_0.015_prune_10
 ```
+## Pruning only backbone (rebuttal)
+```git checkout rebuttal```
+This branch contains experiments related to the rebuttal. 
+Here we report numbers related to directly pruning only the backbone of the network, for both detection and keypoint estimation tasks. 
+The command below trains a resnet18 keypoint model with **50% sparsity in its backbone network**.
+```
+python tools/train_net.py --num-gpus 4 --resume \
+  --config-file configs/COCO-Keypoints/keypoint_rcnn_r18_FPN_1x.yaml \
+	SOLVER.BASE_LR 0.015 \
+	SOLVER.WARMUP_ITERS 2000 \
+	 SOLVER.WARMUP_FACTOR 5e-4 \
+	LOTTERY_KEEP_PERCENTAGE 0.5 \
+	NUM_ROUNDS 2 \
+	OUTPUT_DIR temp/  \
+	LATE_RESET_CKPT  output/keypoint_r18_fpn_warm1k_lr.015/model_0003534.pth \
+	MODEL.WEIGHTS  output/keypoint_r18_fpn_warm1k_lr.015/model_final.pth \
+	TEST.COMPUTE_FLOPS False
+```
+In this branch, we can also set ```TEST.COMPUTE_FLOPS``` argument to ```True``` to obtain flops and memory of the model. 
 
 ## Mask transfer
 ```git checkout mask_transfer```: Switch to mask_transfer branch
@@ -78,3 +97,4 @@ python tools/train_net.py --num-gpus 4 --resume \
 	SOURCE_MODEL  output/mask_rcnn_r18_fpn_warm5k_lr_0.15_prune_20_late_reset/model_0007329.pth
 	#OUTPUT_DIR output/mask_transfer_new_keypoint_ticket_res18_fpn_warm2k_lr_0.015_prune_40/
 ```
+

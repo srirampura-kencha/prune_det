@@ -596,6 +596,9 @@ _C.TEST.AUG.FLIP = True
 _C.TEST.PRECISE_BN = CN({"ENABLED": False})
 _C.TEST.PRECISE_BN.NUM_ITER = 200
 
+#If true, program will exit upon computing flops.
+_C.TEST.COMPUTE_FLOPS = False
+
 # ---------------------------------------------------------------------------- #
 # Misc options
 # ---------------------------------------------------------------------------- #
